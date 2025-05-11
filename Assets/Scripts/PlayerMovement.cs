@@ -24,7 +24,7 @@ public class PlayerMovement : MonoBehaviour
     bool isGrounded;
 
     [Header("Gravity")]
-    public float baseGravity= 2f;
+    public float baseGravity = 2f;
     public float maxFallSpeed = 18f;
     public float fallGravityMult = 2f;
 
@@ -49,13 +49,19 @@ public class PlayerMovement : MonoBehaviour
     [System.Obsolete]
     void Update()
     {
-        rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
-
 
         GroundCheck();
         ProccessGravity();
         ProcessWallSlide();
-        Flip();
+        ProcessWallJump();
+
+        if (!isWallJumping)
+        {
+            rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
+            Flip();
+        }
+
+
     }
 
     public void Move(InputAction.CallbackContext context)
@@ -66,7 +72,7 @@ public class PlayerMovement : MonoBehaviour
     [System.Obsolete]
     public void Jump(InputAction.CallbackContext context)
     {
-        if(jumpsRemaining > 0)
+        if (jumpsRemaining > 0)
         {
             if (context.performed)
             {
@@ -83,10 +89,22 @@ public class PlayerMovement : MonoBehaviour
         }
 
         //wall jumping here
-        if(context.performed && wallJumpTimer > 0f)
+        if (context.performed && wallJumpTimer > 0f)
         {
             isWallJumping = true;
             rb.linearVelocity = new Vector2(wallJumpDirection * wallJumpPower.x, wallJumpPower.y); //saltar da parede
+            wallJumpTimer = 0f; //reset timer
+
+            //Virar player
+            if (transform.localScale.x != wallJumpDirection)
+            {
+                isFacingRight = !isFacingRight;
+                Vector3 theScale = transform.localScale;
+                theScale.x *= -1;
+                transform.localScale = theScale;
+            }
+
+            Invoke(nameof(CancelWallJump), wallJumpTime + 0.1f); //cancel wall jump after a set time
         }
     }
 
@@ -108,10 +126,10 @@ public class PlayerMovement : MonoBehaviour
         return Physics2D.OverlapBox(wallCheckPos.position, wallCheckSize, 0, wallLayer);
     }
 
-    private void  ProccessGravity()
+    private void ProccessGravity()
     {
         //falling gravity
-        if(rb.linearVelocity.y < 0)
+        if (rb.linearVelocity.y < 0)
         {
             rb.gravityScale = baseGravity * fallGravityMult; //fall faster and faster
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, -maxFallSpeed)); //max fall speed
@@ -134,24 +152,35 @@ public class PlayerMovement : MonoBehaviour
         {
             isWallSliding = false;
         }
-        {
+    }
 
+    private void ProcessWallJump()
+    {
+        if (isWallSliding)
+        {
+            isWallJumping = false;
+            wallJumpDirection = -transform.localScale.x; //direção oposta da parede
+            wallJumpTimer = wallJumpTime;
+
+            CancelInvoke(nameof(CancelWallJump));
         }
+        else if (wallJumpTimer > 0f)
+        {
+            wallJumpTimer -= Time.deltaTime;
+        }
+    }
+
+    private void CancelWallJump()
+    {
+        isWallJumping = false;
     }
 
 
     private void Flip()
     {
-        if(isFacingRight && horizontalMovement < 0)
+        if (isFacingRight && horizontalMovement < 0 || !isFacingRight && horizontalMovement > 0)
         {
-            isFacingRight = false;
-            Vector3 theScale = transform.localScale;
-            theScale.x *= -1;
-            transform.localScale = theScale;
-        }
-        else if (!isFacingRight && horizontalMovement > 0)
-        {
-            isFacingRight = true;
+            isFacingRight = !isFacingRight;
             Vector3 theScale = transform.localScale;
             theScale.x *= -1;
             transform.localScale = theScale;
