@@ -3,14 +3,20 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+public class EnumFlagsAttribute : PropertyAttribute { }
+
 public class PlayerMovement : MonoBehaviour
 {
     public Rigidbody2D rb;
+    [SerializeField] public Animator Animator;
     bool isFacingRight = true;
 
     [Header("Movement")]
     public float moveSpeed = 5f;
+    public float runSpeed = 8f;
+    private float currentMoveSpeed;
     float horizontalMovement;
+    bool isRunning = false;
 
     [Header("Jumping")]
     public float jumpPower = 10f;
@@ -20,7 +26,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("GroundCheck")]
     public Transform groundCheckPos;
     public Vector2 groundCheckSize = new Vector2(0.49f, 0.03f);
-    public LayerMask groundLayer;
+    [EnumFlags] public LayerMask groundLayer;
     bool isGrounded;
 
     [Header("Gravity")]
@@ -31,12 +37,11 @@ public class PlayerMovement : MonoBehaviour
     [Header("WallCheck")]
     public Transform wallCheckPos;
     public Vector2 wallCheckSize = new Vector2(0.49f, 0.03f);
-    public LayerMask wallLayer;
+    [EnumFlags] public LayerMask wallLayer;
 
     [Header("WallSlide")]
     public float wallSlideSpeed = 2f;
     bool isWallSliding;
-
 
     //wall jumping here
     bool isWallJumping;
@@ -45,11 +50,14 @@ public class PlayerMovement : MonoBehaviour
     float wallJumpTimer;
     public Vector2 wallJumpPower = new Vector2(5f, 10f);
 
+    private void Start()
+    {
+        currentMoveSpeed = moveSpeed; // Initialize with walk speed
+    }
 
     [System.Obsolete]
     void Update()
     {
-
         GroundCheck();
         ProccessGravity();
         ProcessWallSlide();
@@ -57,16 +65,34 @@ public class PlayerMovement : MonoBehaviour
 
         if (!isWallJumping)
         {
-            rb.linearVelocity = new Vector2(horizontalMovement * moveSpeed, rb.linearVelocity.y);
+            rb.linearVelocity = new Vector2(horizontalMovement * currentMoveSpeed, rb.linearVelocity.y);
             Flip();
         }
 
-
+        Animator.SetFloat("yVelocity", rb.velocity.y);
+        Animator.SetFloat("magnitude", rb.velocity.magnitude);
+        Animator.SetBool("isWallSliding", isWallSliding);
+        Animator.SetBool("isRunning", isRunning); // Set running animation parameter
     }
 
     public void Move(InputAction.CallbackContext context)
     {
         horizontalMovement = context.ReadValue<Vector2>().x;
+    }
+
+    // New method for handling run input
+    public void Run(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            isRunning = true;
+            currentMoveSpeed = runSpeed;
+        }
+        else if (context.canceled)
+        {
+            isRunning = false;
+            currentMoveSpeed = moveSpeed;
+        }
     }
 
     [System.Obsolete]
@@ -79,12 +105,14 @@ public class PlayerMovement : MonoBehaviour
                 //Hold down jump button = full height
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpPower);
                 jumpsRemaining--;
+                Animator.SetTrigger("jump");
             }
             else if (context.canceled && rb.linearVelocity.y > 0)
             {
                 //Light tap of jump button = half the height
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f);
                 jumpsRemaining--;
+                Animator.SetTrigger("jump");
             }
         }
 
@@ -138,7 +166,6 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.gravityScale = baseGravity;
         }
-
     }
 
     private void ProcessWallSlide()
@@ -175,7 +202,6 @@ public class PlayerMovement : MonoBehaviour
         isWallJumping = false;
     }
 
-
     private void Flip()
     {
         if (isFacingRight && horizontalMovement < 0 || !isFacingRight && horizontalMovement > 0)
@@ -186,6 +212,7 @@ public class PlayerMovement : MonoBehaviour
             transform.localScale = theScale;
         }
     }
+
     private void OnDrawGizmosSelected()
     {
         //Ground check visual
