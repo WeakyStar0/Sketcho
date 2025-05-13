@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,6 +18,14 @@ public class PlayerMovement : MonoBehaviour
     private float currentMoveSpeed;
     float horizontalMovement;
     bool isRunning = false;
+
+    [Header("Dashing")]
+    public float dashSpeed = 20f;
+    public float dashDuration = 0.2f;
+    public float dashCooldown = 0.1f;
+    bool isDashing;
+    bool canDash = true;
+    TrailRenderer trailRenderer;
 
     [Header("Jumping")]
     public float jumpPower = 10f;
@@ -53,11 +62,23 @@ public class PlayerMovement : MonoBehaviour
     private void Start()
     {
         currentMoveSpeed = moveSpeed; // Initialize with walk speed
+        trailRenderer = GetComponent<TrailRenderer>();
     }
 
     [System.Obsolete]
     void Update()
     {
+
+        Animator.SetFloat("yVelocity", rb.velocity.y);
+        Animator.SetFloat("magnitude", rb.velocity.magnitude);
+        Animator.SetBool("isWallSliding", isWallSliding);
+        Animator.SetBool("isRunning", isRunning); // Set running animation parameter
+
+        if (isDashing)
+        {
+            return;
+        }
+
         GroundCheck();
         ProccessGravity();
         ProcessWallSlide();
@@ -69,15 +90,42 @@ public class PlayerMovement : MonoBehaviour
             Flip();
         }
 
-        Animator.SetFloat("yVelocity", rb.velocity.y);
-        Animator.SetFloat("magnitude", rb.velocity.magnitude);
-        Animator.SetBool("isWallSliding", isWallSliding);
-        Animator.SetBool("isRunning", isRunning); // Set running animation parameter
+
     }
 
     public void Move(InputAction.CallbackContext context)
     {
         horizontalMovement = context.ReadValue<Vector2>().x;
+    }
+
+
+    public void Dash(InputAction.CallbackContext context)
+    {
+        if (context.performed && canDash)
+        {
+            StartCoroutine(DashCoroutine());
+        }
+    }
+
+    private IEnumerator DashCoroutine()
+    {
+        Physics2D.IgnoreLayerCollision(31, 30, true); //ignore collision with player and enemy
+
+        canDash = false;
+        isDashing = true;
+
+        trailRenderer.emitting = true;
+        float dashDirection = isFacingRight ? 1f : -1f;
+        rb.linearVelocity = new Vector2(dashDirection * dashSpeed, rb.linearVelocity.y); //dash movement
+        yield return new WaitForSeconds(dashDuration); //wait for dash duration
+        rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y); //stop dash movement
+
+        isDashing = false;
+        trailRenderer.emitting = false;
+        Physics2D.IgnoreLayerCollision(31, 30, false); //ignore collision with player and enemy
+
+        yield return new WaitForSeconds(dashCooldown); //wait for dash cooldown
+        canDash = true; //reset dash
     }
 
     // New method for handling run input
