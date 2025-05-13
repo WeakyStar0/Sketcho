@@ -10,6 +10,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] public Animator Animator;
     bool isFacingRight = true;
 
+    [Header("Particles")]
+    public ParticleSystem movementParticles; // Assign this in the inspector
+
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float runSpeed = 8f;
@@ -74,14 +77,48 @@ public class PlayerMovement : MonoBehaviour
     {
         StartCoroutine(SpeedBoostCoroutine(multiplier));
     }
-    
+
     private IEnumerator SpeedBoostCoroutine(float multiplier)
     {
-        speedMultiplier = multiplier;
-        yield return new WaitForSeconds(2f);
-        speedMultiplier = 1f;
-    }
+        // Store original values
+        bool wasRunning = isRunning;
+        float originalMoveSpeed = moveSpeed;
+        float originalRunSpeed = runSpeed;
 
+        // Force running state during boost
+        isRunning = true;
+        currentMoveSpeed = runSpeed * multiplier;
+
+        // Apply speed boost
+        moveSpeed *= multiplier;
+        runSpeed *= multiplier;
+
+        // Enable particles if they exist
+        if (movementParticles != null)
+        {
+            movementParticles.Play(); // Start emitting particles
+        }
+
+        // Force running animation
+        Animator.SetBool("isRunning", true);
+
+        yield return new WaitForSeconds(2f); // Boost duration
+
+        // Restore original values
+        moveSpeed = originalMoveSpeed;
+        runSpeed = originalRunSpeed;
+        isRunning = wasRunning;
+        currentMoveSpeed = isRunning ? runSpeed : moveSpeed;
+
+        // Stop particles if they exist
+        if (movementParticles != null)
+        {
+            movementParticles.Stop(); // Stop emitting particles
+        }
+
+        // Update animator
+        Animator.SetBool("isRunning", isRunning);
+    }
 
     [System.Obsolete]
     void Update()
@@ -105,40 +142,52 @@ public class PlayerMovement : MonoBehaviour
             {
                 horizontalMovement = 1f; // Always move right
             }
-            
+
             rb.linearVelocity = new Vector2(horizontalMovement * currentMoveSpeed * speedMultiplier, rb.linearVelocity.y);
             Flip();
         }
     }
 
     public void EnterWalkBound()
+{
+    inWalkBound = true;
+    originalFacingRight = isFacingRight;
+
+    // Force facing right
+    if (!isFacingRight)
     {
-        inWalkBound = true;
-        originalFacingRight = isFacingRight;
-        
-        // Force facing right
-        if (!isFacingRight)
-        {
-            Flip();
-        }
-        
-        currentMoveSpeed = forcedMoveSpeed;
-        isRunning = true;
+        Flip();
     }
 
-    public void ExitWalkBound()
+    currentMoveSpeed = forcedMoveSpeed;
+    isRunning = true;
+
+    // Enable particles if they exist
+    if (movementParticles != null)
     {
-        inWalkBound = false;
-        
-        // Restore original facing if needed
-        if (originalFacingRight != isFacingRight)
-        {
-            Flip();
-        }
-        
-        currentMoveSpeed = moveSpeed;
-        isRunning = false;
+        movementParticles.Play(); // Start emitting particles in WalkBound
     }
+}
+
+    public void ExitWalkBound()
+{
+    inWalkBound = false;
+
+    // Restore original facing if needed
+    if (originalFacingRight != isFacingRight)
+    {
+        Flip();
+    }
+
+    currentMoveSpeed = moveSpeed;
+    isRunning = false;
+
+    // Stop particles if they exist (unless speed boost is active)
+    if (movementParticles != null && !isRunning) // Additional check to prevent stopping during speed boost
+    {
+        movementParticles.Stop(); // Stop emitting particles when exiting WalkBound
+    }
+}
 
     public void Move(InputAction.CallbackContext context)
     {
@@ -303,9 +352,16 @@ public class PlayerMovement : MonoBehaviour
             Vector3 theScale = transform.localScale;
             theScale.x *= -1;
             transform.localScale = theScale;
+
+            // Flip the particle system if it exists
+            if (movementParticles != null)
+            {
+                var particlesScale = movementParticles.transform.localScale;
+                particlesScale.x *= -1;
+                movementParticles.transform.localScale = particlesScale;
+            }
         }
     }
-
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.white;
