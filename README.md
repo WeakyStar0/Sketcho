@@ -13,7 +13,7 @@ O foco é a criação de um jogo de plataforma com elementos clássicos, explora
 ## Arte e Estilo Visual
 
 As sprites utilizadas foram inspiradas no pack [1-Bit Platformer Pack by Kenney](https://www.kenney.nl/assets/1-bit-platformer-pack).  
-Foram redesenhadas à mão com o objetivo de manter uma estética semelhante, mas com um aspeto mais artístico e desenhado à mão.
+Foram redesenhadas e alteradas à mão com o objetivo de manter uma estética semelhante, mas com um aspeto mais artístico e desenhado à mão.
 
 ## Estado Atual
 
