@@ -29,7 +29,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Dashing")]
     public float dashSpeed = 20f;
     public float dashDuration = 0.2f;
-    public float dashCooldown = 0.1f;
+    public float dashCooldown = 2f;
     bool isDashing;
     bool canDash = true;
     TrailRenderer trailRenderer;
