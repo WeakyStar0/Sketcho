@@ -3,10 +3,12 @@ using UnityEngine.SceneManagement;
 
 public class MainMenuController : MonoBehaviour
 {
+    [Header("Scene to load")]
+    [SerializeField] private string levelToLoad = "GameScene";
     public void OnStartClick()
     {
         // Load the game scene
-        SceneManager.LoadScene("Level1");
+        SceneManager.LoadScene(levelToLoad);
     }
 
     public void OnExitClick()

@@ -6,33 +6,43 @@ public class EraserEnemyPatrol : MonoBehaviour
     [SerializeField] private Transform pointA;
     [SerializeField] private Transform pointB;
     [SerializeField] private float speed = 2f;
-    [SerializeField] private float waitTime = 1f; // Time to wait at each point
+    [SerializeField] private float waitTime = 1f;
     
+    [Header("Collision Settings")]
+    [SerializeField] private bool canBePushed = false;
+    [SerializeField] private float pushResistance = 5f;
+    [SerializeField] private Collider2D damageTrigger; // Assign in Inspector
+
     [Header("Visuals")]
-    [SerializeField] private bool flipSprite = true; // Enable/disable sprite flipping
-    
+    [SerializeField] private bool flipSprite = true;
+
     private Transform currentTarget;
     private SpriteRenderer spriteRenderer;
+    private Rigidbody2D rb;
     private bool isWaiting = false;
     private float waitTimer = 0f;
 
-    public int damage = 1; // Damage dealt to the player
+    public int damage = 1;
 
     private void Start()
     {
-        // Initialize by moving toward point A
         currentTarget = pointA;
         spriteRenderer = GetComponent<SpriteRenderer>();
-        
-        // Ensure the sprite faces the initial direction
-        UpdateSpriteDirection();
+        rb = GetComponent<Rigidbody2D>();
+
+        if (rb == null) rb = gameObject.AddComponent<Rigidbody2D>();
+        rb.gravityScale = 0;
+        rb.freezeRotation = true;
+
+        // Auto-setup if missing
+        if (damageTrigger == null) damageTrigger = GetComponent<Collider2D>();
+        if (damageTrigger != null) damageTrigger.isTrigger = true;
     }
 
     private void Update()
     {
         if (isWaiting)
         {
-            // Handle waiting at a point
             waitTimer += Time.deltaTime;
             if (waitTimer >= waitTime)
             {
@@ -43,46 +53,50 @@ public class EraserEnemyPatrol : MonoBehaviour
         }
         else
         {
-            // Move toward the current target
-            transform.position = Vector2.MoveTowards(
-                transform.position, 
-                currentTarget.position, 
-                speed * Time.deltaTime
-            );
+            // Only move if not being pushed
+            if (rb.linearVelocity.magnitude < 0.1f)
+            {
+                transform.position = Vector2.MoveTowards(
+                    transform.position, 
+                    currentTarget.position, 
+                    speed * Time.deltaTime
+                );
+            }
 
-            // Check if reached the current target
             if (Vector2.Distance(transform.position, currentTarget.position) < 0.1f)
             {
                 isWaiting = true;
             }
             
-            // Update sprite direction while moving
             UpdateSpriteDirection();
         }
     }
 
-    private void SwitchTarget()
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        // Switch to the other target point
-        currentTarget = currentTarget == pointA ? pointB : pointA;
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            if (!canBePushed)
+            {
+                rb.linearVelocity = Vector2.zero;
+                rb.isKinematic = true;
+            }
+            else
+            {
+                Vector2 pushDirection = (transform.position - collision.transform.position).normalized;
+                rb.AddForce(pushDirection * pushResistance, ForceMode2D.Impulse);
+            }
+        }
     }
+
+    private void SwitchTarget() => currentTarget = currentTarget == pointA ? pointB : pointA;
 
     private void UpdateSpriteDirection()
     {
         if (!flipSprite || spriteRenderer == null) return;
-        
-        // Flip sprite based on movement direction
-        if (currentTarget.position.x > transform.position.x)
-        {
-            spriteRenderer.flipX = true;
-        }
-        else if (currentTarget.position.x < transform.position.x)
-        {
-            spriteRenderer.flipX = false;
-        }
+        spriteRenderer.flipX = currentTarget.position.x > transform.position.x;
     }
 
-    // Visualize the patrol path in the editor
     private void OnDrawGizmos()
     {
         if (pointA != null && pointB != null)
@@ -91,13 +105,6 @@ public class EraserEnemyPatrol : MonoBehaviour
             Gizmos.DrawLine(pointA.position, pointB.position);
             Gizmos.DrawSphere(pointA.position, 0.2f);
             Gizmos.DrawSphere(pointB.position, 0.2f);
-            
-            // Draw a line to current target in Scene view
-            if (Application.isPlaying && currentTarget != null)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(transform.position, currentTarget.position);
-            }
         }
     }
 }

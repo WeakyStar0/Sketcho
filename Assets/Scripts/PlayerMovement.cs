@@ -148,6 +148,39 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public void ResetPlayerState()
+    {
+        // Reset movement state
+        rb.linearVelocity = Vector2.zero;
+        isDashing = false;
+        canDash = true;
+        trailRenderer.emitting = false;
+        
+        // Reset jump state
+        jumpsRemaining = maxJumps;
+        isGrounded = true; // Assume we're respawning on ground
+        
+        // Reset wall interactions
+        isWallSliding = false;
+        isWallJumping = false;
+        wallJumpTimer = 0f;
+        
+        // Reset forced movement
+        inWalkBound = false;
+        isRunning = false;
+        currentMoveSpeed = moveSpeed;
+        speedMultiplier = 1f;
+        
+        // Reset visual effects
+        if (movementParticles != null)
+        {
+            movementParticles.Stop();
+        }
+        
+        // Reset physics collisions
+        Physics2D.IgnoreLayerCollision(31, 30, false); // Reset enemy collision
+    }
+
     public void EnterWalkBound()
 {
     inWalkBound = true;

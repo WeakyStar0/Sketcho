@@ -16,10 +16,10 @@ public class WalkBoundZone : MonoBehaviour
             {
                 player.forcedMoveSpeed = moveSpeedInZone;
                 player.EnterWalkBound();
-                
-                if (enterEffect != null) 
+
+                if (enterEffect != null)
                 {
-                    enterEffect.Play(); // Play effect if assigned
+                    enterEffect.Play(); // Play effect when player enters the zone
                 }
             }
         }
@@ -33,6 +33,11 @@ public class WalkBoundZone : MonoBehaviour
             if (player != null)
             {
                 player.ExitWalkBound();
+
+                if (enterEffect != null)
+                {
+                    enterEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear); // Stop and clear the particles
+                }
             }
         }
     }
