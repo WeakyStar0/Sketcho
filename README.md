@@ -17,8 +17,13 @@ Foram redesenhadas e alteradas à mão com o objetivo de manter uma estética se
 
 ## Estado Atual
 
-Projeto está **em desenvolvimento ativo**.  
-Mais informações e funcionalidades serão adicionadas em breve.
+Projeto **parado** de momento.
+Mais informações e funcionalidades serão adicionadas se o autor tiver motivação para tal.
+
+---
+
+### Play Sketcho
+[Sketcho on Itch.io](https://weakystar.itch.io/sketcho)
 
 ---
 
