@@ -4,7 +4,7 @@ Este repositório contém o código e os recursos do jogo 2D desenvolvido como p
 
 ## Sobre o Jogo
 
-O jogo está a ser criado com base nos conceitos e técnicas ensinados no seguinte tutorial do:
+O jogo foi baseado nos conceitos e técnicas ensinados no seguinte tutorial:
 
 - ["Create a 2D Platformer in Unity (C#)"](https://www.youtube.com/watch?v=BwrzZI0_-qw&list=PLaaFfzxy_80EWnrTHyUkkIy6mJrhwGYN0)
 
