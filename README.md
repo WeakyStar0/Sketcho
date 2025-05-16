@@ -17,7 +17,7 @@ Foram redesenhadas e alteradas à mão com o objetivo de manter uma estética se
 
 ## Estado Atual
 
-Projeto **parado** de momento.
+Projeto **parado** de momento.  
 Mais informações e funcionalidades serão adicionadas se o autor tiver motivação para tal.
 
 ---
