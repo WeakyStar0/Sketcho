@@ -22,8 +22,8 @@ Mais informações e funcionalidades serão adicionadas se o autor tiver motiva�
 
 ---
 
-### Play Sketcho
-[Sketcho on Itch.io](https://weakystar.itch.io/sketcho)
+### - [Play Sketcho on Itch.io](https://weakystar.itch.io/sketcho)
+*Tip: Ctrl+Click to open in a new tab!*
 
 ---
 
