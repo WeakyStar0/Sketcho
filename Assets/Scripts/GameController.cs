@@ -26,10 +26,6 @@ public class GameController : MonoBehaviour
     private bool isPaused = false;
     public static System.Action<bool> OnPauseStateChanged;
 
-    [Header("Music Settings")]
-    [SerializeField] private AudioClip nextLevelMusic;
-
-
     private void Start()
     {
         ResetGameState();
@@ -41,11 +37,9 @@ public class GameController : MonoBehaviour
             pauseMenu.SetActive(false);
         }
 
-        // Initialize cursor state
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Debug scene info
         Debug.Log($"Current scene: {SceneManager.GetActiveScene().name}");
         if (!string.IsNullOrEmpty(nextSceneName))
         {
@@ -88,15 +82,10 @@ public class GameController : MonoBehaviour
         gameOverText.text = "BETTER LUCK\nNEXT TIME";
         Time.timeScale = 0;
 
-        // Handle music
-        if (MusicManager.Instance != null)
-        {
-            MusicManager.Instance.SetVolume(0.2f);
-        }
-
-        // Handle cursor
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+
+        BGmusic.instance?.StopMusic();
     }
 
     public void ResetGame()
@@ -104,6 +93,8 @@ public class GameController : MonoBehaviour
         Time.timeScale = 1;
         Gem.OnGemCollected -= UpdateProgress;
         PlayerHealth.OnPlayerDeath -= GameOverScreen;
+
+        BGmusic.instance?.RestartMusic();
 
         if (string.IsNullOrEmpty(resetSceneName))
         {
@@ -129,6 +120,8 @@ public class GameController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         OnPauseStateChanged?.Invoke(true);
+
+        BGmusic.instance?.LowerVolume(0.3f);
     }
 
     public void ResumeGame()
@@ -142,6 +135,8 @@ public class GameController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         OnPauseStateChanged?.Invoke(false);
+
+        BGmusic.instance?.RestoreVolume();
     }
 
     public void GoToMainMenu()
@@ -167,16 +162,8 @@ public class GameController : MonoBehaviour
 
     private IEnumerator LoadNextScene()
     {
-        // Optional: short delay before transition
         yield return new WaitForSeconds(0.1f);
 
-        // Play next level music if available
-        if (MusicManager.Instance != null && nextLevelMusic != null)
-        {
-            MusicManager.Instance.PlayMusic(nextLevelMusic);
-        }
-
-        // Load by name or build index
         if (!string.IsNullOrEmpty(nextSceneName))
         {
             SceneManager.LoadScene(nextSceneName);
@@ -192,6 +179,14 @@ public class GameController : MonoBehaviour
             Debug.LogError("No valid scene to load! Check GameController settings.");
         }
     }
+
+    //go to credits button
+    public void GoToCredits()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("Credits");
+    }
+
 
     private void OnDestroy()
     {

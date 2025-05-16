@@ -14,10 +14,17 @@ public class MainMenuController : MonoBehaviour
     public void OnExitClick()
     {
         // If running in the editor, stop playing
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-    #endif
+#endif
         // Quit the application
         Application.Quit();
+    }
+
+    //funtion to load credits scene
+    public void OnCreditsClick()
+    {
+        // Load the credits scene
+        SceneManager.LoadScene("Credits");
     }
 }

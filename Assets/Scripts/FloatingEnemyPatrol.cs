@@ -14,6 +14,15 @@ public class FloatingEnemyPatrol : MonoBehaviour
     [Header("Combat")]
     public int damage = 1;
 
+    [Header("Shake Settings")]
+    [SerializeField] private Transform objectToShake;
+    [SerializeField] private float shakeDuration = 0.3f;
+    [SerializeField] private float shakeAngle = 5f;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip stunSound;
+    [SerializeField] private AudioSource audioSource;
+
     private int currentPointIndex = 0;
     private bool isWaiting = false;
     private float waitTimer = 0f;
@@ -31,6 +40,13 @@ public class FloatingEnemyPatrol : MonoBehaviour
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (audioSource == null && stunSound != null)
+        {
+            // Add an AudioSource if not set but clip exists
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+        }
     }
 
     private void Update()
@@ -55,6 +71,7 @@ public class FloatingEnemyPatrol : MonoBehaviour
         if (Vector2.Distance(transform.position, target.position) < 0.05f)
         {
             isWaiting = true;
+            TriggerRotationShake();
         }
 
         UpdateSpriteDirection(target);
@@ -84,12 +101,48 @@ public class FloatingEnemyPatrol : MonoBehaviour
         if (spriteRenderer != null)
             spriteRenderer.color = flashColor;
 
+        TriggerRotationShake();
+        PlayStunSound();
+
         yield return new WaitForSeconds(duration);
 
         if (spriteRenderer != null)
             spriteRenderer.color = Color.white;
 
         isStunned = false;
+    }
+
+    private void TriggerRotationShake()
+    {
+        if (objectToShake != null)
+        {
+            StopCoroutine("ShakeRotation");
+            StartCoroutine(ShakeRotation(objectToShake, shakeDuration, shakeAngle));
+        }
+    }
+
+    private IEnumerator ShakeRotation(Transform target, float duration, float maxAngle)
+    {
+        float timer = 0f;
+        Quaternion originalRotation = target.localRotation;
+
+        while (timer < duration)
+        {
+            float angle = Random.Range(-maxAngle, maxAngle);
+            target.localRotation = Quaternion.Euler(0f, 0f, angle);
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        target.localRotation = originalRotation;
+    }
+
+    private void PlayStunSound()
+    {
+        if (audioSource != null && stunSound != null)
+        {
+            audioSource.PlayOneShot(stunSound);
+        }
     }
 
     private void OnDrawGizmosSelected()
